@@ -1,3 +1,6 @@
+.env
+.env.dev
+
 # OSX
 #
 .DS_Store
