@@ -1,10 +1,33 @@
 import db from './database';
 
 export const insertNfcData = async (tag_id: string) => {
-  (await db).transaction(tx => {
-    tx.executeSql('INSERT INTO nfc_data (tag_id) VALUES (?)', [tag_id]);
-  });
+  try {
+    (await db).transaction(tx => {
+      tx.executeSql('INSERT INTO nfc_data (tag_id) VALUES (?)', 
+        [tag_id]
+      );
+    });
+  } catch (error) {
+    console.error('Transaction error:', error);
+  }
 };
+
+export const deleteNfcData = async (id: string) => {
+  try {
+    (await db).transaction(tx => {
+      tx.executeSql('DELETE FROM nfc_data WHERE id = ?',
+        [id],
+        (_, result) => {
+          let insertId = result.insertId;
+          return insertId;
+        }
+      )
+    })
+  } catch (error) {
+    console.error('Transaction error:', error);
+  }
+
+}
 
 export const getNfcData = async (): Promise<any[]> => {
   try {

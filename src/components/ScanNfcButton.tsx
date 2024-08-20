@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import NfcManager, { NfcTech, TagEvent } from 'react-native-nfc-manager';
 
+// scan NFC -> save in DB -> send to server -> delete from DB
+
 type ScanProps = {
-    onResult: (result: TagEvent | null) => void;
+  onResult: (result: TagEvent | null) => void;
 }
 
 const ScanNfcButton: React.FC<ScanProps> = ({ onResult }) => {

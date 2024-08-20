@@ -16,16 +16,6 @@ export const createTable = async () => {
   }
 };
 
-export const insertDataTest = async (tag_id: string) => {
-  try {
-    (await db).transaction(tx => {
-      tx.executeSql('INSERT INTO nfc_data (tag_id) VALUES (?)', [tag_id]);
-    });
-  } catch (error) {
-    console.log('Error inserting test data: ', error);
-  }
-};
-
 export const deleteAllDataTest = async (): Promise<void> => {
   try {
     (await db).transaction(tx => {
@@ -43,3 +33,16 @@ export const deleteAllDataTest = async (): Promise<void> => {
     console.log('Error deleting data from table: ', error);
   }
 }
+
+
+
+///// TESTS //////
+// export const insertDataTest = async (tag_id: string) => {
+//   try {
+//     (await db).transaction(tx => {
+//       tx.executeSql('INSERT INTO nfc_data (tag_id) VALUES (?)', [tag_id]);
+//     });
+//   } catch (error) {
+//     console.log('Error inserting test data: ', error);
+//   }
+// };

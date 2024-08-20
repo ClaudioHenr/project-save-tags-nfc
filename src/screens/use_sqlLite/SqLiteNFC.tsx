@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { createTable, deleteAllDataTest, insertDataTest, } from '../../database/sqlite_database/migrations/createTable';
-import { getNfcData, insertNfcData } from '../../database/sqlite_database/queries';
+import { createTable, deleteAllDataTest } from '../../database/sqlite_database/migrations/createTable';
+import { deleteNfcData, getNfcData, insertNfcData } from '../../database/sqlite_database/queries';
 import ScanNfcButton from '../../components/ScanNfcButton';
 import { TagEvent } from 'react-native-nfc-manager';
 
@@ -15,13 +15,12 @@ type SqliteProps = {
 
 function SqLiteNFC() {
   const [dataNfc, setDataNfc] = useState<TagEvent | null>(null);
-  const [dataNfcFormat, setDataNfcFormat] = useState<SqliteProps>();
-  const [dataTest, setDataTest] = useState<SqliteProps[]>([]);
+  const [dataNfcLocal, setDataNfcLocal] = useState<SqliteProps[]>([]);
 
   useEffect(() => {
-    checkConnectionServer()
+    checkConnectionServer();
+    getDataFromDatabaseLocal();
     createTable();
-    handleDatabase()
   }, []);
 
   const checkConnectionServer = () => {
@@ -40,11 +39,11 @@ function SqLiteNFC() {
       });
   }
 
-  const handleDatabase = async () => {
+  const getDataFromDatabaseLocal = async () => {
     const data: any[] = await getNfcData();
     try {
       if (data && data.length > 0) {
-        setDataTest(data)
+        setDataNfcLocal(data)
       } else {
         Alert.alert('Data not found')
       }
@@ -61,16 +60,46 @@ function SqLiteNFC() {
       const tag_id: string | undefined = result.id;
       console.log('TAG_ID: ', tag_id)
       if (tag_id) {
-        insertNfcData(tag_id);
+        insertNfcData(tag_id).then(() => {
+          getDataFromDatabaseLocal();
+        })
+        handleSendDataToServer();
       }
     }
+  }
+
+  const handleSendDataToServer = () => {
+    for (let i = 0; i < dataNfcLocal.length; i++) {
+      let id: string = dataNfcLocal[i].id;
+      let tag_id: string = dataNfcLocal[i].tag_id;
+      fetchNfcTag(id, tag_id);
+    }
+  }
+
+  const fetchNfcTag = (id: string, tag_id: string) => {
+    console.log(`id: ${id}, tag_id: ${tag_id}`)
+    const body: string = JSON.stringify({id, tag_id})
+    fetch(`${API_URL}/nfc`, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: body,
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`${res.statusText} Status: ${res.status}`);
+        }
+        deleteNfcData(id)
+      })
+      .catch(error => {
+        console.error("Error fetching data: ", error);
+      })
   }
 
   return (
     <View style={styles.wrapper}>
       <ScanNfcButton onResult={handleDataNfc} />
-      {dataTest.length > 0 ? (
-        dataTest.map((item, index) => (
+      {dataNfcLocal.length > 0 ? (
+        dataNfcLocal.map((item, index) => (
           <Text key={item.id} style={styles.text}>{index} {item.tag_id}</Text>
         ))
       ) : (
