@@ -14,11 +14,11 @@ function Home({ navigation }: Props) {
   return (
     <View style={styles.wrapper}>
       <NavButton
-        title="JsonNFC"
+        title="Json NFC"
         onPress={() => navigation.navigate('JsonNFC')}
       />
       <NavButton
-        title="SqLiteNFC"
+        title="SqLite NFC"
         onPress={() => navigation.navigate('SqLiteNFC')}
       />
     </View>
@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
 });
 

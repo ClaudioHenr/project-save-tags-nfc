@@ -18,7 +18,7 @@ export const deleteNfcData = async (id: string) => {
       tx.executeSql('DELETE FROM nfc_data WHERE id = ?',
         [id],
         (_, result) => {
-          let insertId = result.insertId;
+          const insertId = result.insertId;
           return insertId;
         }
       )

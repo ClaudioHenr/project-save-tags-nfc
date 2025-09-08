@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import NfcManager, { NfcTech, TagEvent } from 'react-native-nfc-manager';
+import { View, Text, StyleSheet } from 'react-native';
+import NfcManager, { TagEvent } from 'react-native-nfc-manager';
 import RNFS from 'react-native-fs';
+import ScanNfcButton from '../../components/ScanNfcButton';
 
 
 function JsonNFC() {
@@ -13,7 +14,7 @@ function JsonNFC() {
   }, [])
 
   const hasSupportNfc = async () => {
-    let supported = await NfcManager.isSupported()
+    const supported = await NfcManager.isSupported()
     setSupportNfc(supported)
     if (!supported) {
       console.log("theres is no support...")
@@ -44,27 +45,13 @@ function JsonNFC() {
     console.log('Tag data saved to ', path)
   }
 
-  async function readNdef() {
-    try {
-      // register for the NFC tag with NDEF in it
-      await NfcManager.requestTechnology(NfcTech.Ndef);
-      // the resolved tag object will contain `ndefMessage` property
-      const tag = await NfcManager.getTag();
-      console.log('Tag found', tag);
-      createJsonFile(tag)
-    } catch (ex) {
-      console.warn('Oops!', ex);
-    } finally {
-      // stop the nfc scanning
-      NfcManager.cancelTechnologyRequest();
-    }
+  const handleDataNfc = (result: TagEvent | null) => {
+    createJsonFile(result);
   }
 
   return (
     <View style={styles.wrapper}>
-      <TouchableOpacity onPress={readNdef}>
-        <Text style={styles.btn_text}>Scan a Tag</Text>
-      </TouchableOpacity>
+      <ScanNfcButton onResult={handleDataNfc}/>
       <Text>Is supported? {supportNfc === null ? "checking..." : supportNfc ? "Yes" : "No"}</Text>
     </View>
   );
@@ -77,10 +64,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  btn_text: {
-    color: 'white',
-    fontSize: 25,
-  }
 });
 
 export default JsonNFC;

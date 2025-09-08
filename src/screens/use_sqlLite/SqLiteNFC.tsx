@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { createTable, deleteAllDataTest } from '../../database/sqlite_database/migrations/createTable';
+import { createTable } from '../../database/sqlite_database/migrations/createTable';
 import { deleteNfcData, getNfcData, insertNfcData } from '../../database/sqlite_database/queries';
 import ScanNfcButton from '../../components/ScanNfcButton';
 import { TagEvent } from 'react-native-nfc-manager';
@@ -14,38 +14,50 @@ type SqliteProps = {
 };
 
 function SqLiteNFC() {
-  const [dataNfc, setDataNfc] = useState<TagEvent | null>(null);
   const [dataNfcLocal, setDataNfcLocal] = useState<SqliteProps[]>([]);
 
   useEffect(() => {
-    checkConnectionServer();
-    getDataFromDatabaseLocal();
-    createTable();
+    const initialize = async () => {
+      try {
+        await createTable();
+        await getDataFromDatabaseLocal();
+        await handleSendDataToServer();
+      } catch (error) {
+        console.error('Error initializing data:', error);
+      }
+    };
+  
+    initialize();
   }, []);
 
-  const checkConnectionServer = () => {
-    fetch(`${API_URL}/nfc`)
+  const checkConnectionServer = (): Promise<boolean> => {
+    return (
+      fetch(`${API_URL}/nfc`)
       .then(res => {
         if (!res.ok) {
           throw new Error(`HTTP error! Status: ${res.status}`);
         }
-        return res.json(); // Chame json() como uma função
+        // return res.json(); // Chame json() como uma função
+        return res.json()
       })
       .then(data => {
         console.log('Data received', data);
+        return true
       })
       .catch (error =>  {
         console.error('Error fetching data:', error);
-      });
+        return false
+      })
+    )
   }
 
   const getDataFromDatabaseLocal = async () => {
-    const data: any[] = await getNfcData();
+    const data = await getNfcData();
     try {
       if (data && data.length > 0) {
         setDataNfcLocal(data)
       } else {
-        Alert.alert('Data not found')
+        Alert.alert('Data not found in db local')
       }
     } catch (error) {
       console.error('Error handling database:', error);
@@ -53,26 +65,37 @@ function SqLiteNFC() {
     }
   }
 
-  const handleDataNfc = (result: TagEvent | null) => {
+  const handleDataNfc = async (result: TagEvent | null) => {
     if (result) {
-      setDataNfc(result);
-      console.log('Tag scanned: ', dataNfc);
       const tag_id: string | undefined = result.id;
       console.log('TAG_ID: ', tag_id)
       if (tag_id) {
-        insertNfcData(tag_id).then(() => {
-          getDataFromDatabaseLocal();
-        })
-        handleSendDataToServer();
+        try {
+          await insertNfcData(tag_id);
+          await getDataFromDatabaseLocal();
+          await handleSendDataToServer();
+        } catch (error) {
+          console.error('Error handling NFC data:', error);
+        }
       }
     }
   }
 
-  const handleSendDataToServer = () => {
-    for (let i = 0; i < dataNfcLocal.length; i++) {
-      let id: string = dataNfcLocal[i].id;
-      let tag_id: string = dataNfcLocal[i].tag_id;
-      fetchNfcTag(id, tag_id);
+  const handleSendDataToServer = async () => {
+    try {
+      const isConnect: boolean = await checkConnectionServer();
+      console.log('Is connected: ', isConnect)
+      if (isConnect) {
+        for (let i = 0; i < dataNfcLocal.length; i++) {
+          const id: string = dataNfcLocal[i].id;
+          const tag_id: string = dataNfcLocal[i].tag_id;
+          fetchNfcTag(id, tag_id);
+        }
+      } else {
+        console.log('Failed connect to the server');
+      }
+    } catch (error) {
+      console.error('Error: ', error);
     }
   }
 
@@ -88,7 +111,9 @@ function SqLiteNFC() {
         if (!res.ok) {
           throw new Error(`${res.statusText} Status: ${res.status}`);
         }
-        deleteNfcData(id)
+        deleteNfcData(id).then(() => 
+          getDataFromDatabaseLocal()
+        )
       })
       .catch(error => {
         console.error("Error fetching data: ", error);

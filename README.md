@@ -108,6 +108,8 @@ sudo keytool -genkey -v -keystore my-upload-key.keystore -alias my-key-alias -ke
 cd android/
 npx react-native build-android --mode=release
 
+npm run android -- --mode="release"
+
 Link: https://reactnative.dev/docs/signed-apk-android
 
 Link video: https://www.youtube.com/watch?v=i28btjntmNE&ab_channel=Sujeitoprogramador

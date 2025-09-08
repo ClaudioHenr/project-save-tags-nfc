@@ -9,7 +9,7 @@ const Stack = createNativeStackNavigator();
 function StackNav() {
   return (
     <Stack.Navigator initialRouteName="Home">
-      <Stack.Screen name="Home" component={Home} options={{title: 'Home'}} />
+      <Stack.Screen name="Home" component={Home} options={{title: 'HOME'}} />
       <Stack.Screen
         name="JsonNFC"
         component={JsonNFC}
